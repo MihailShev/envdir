@@ -9,14 +9,18 @@ import (
 )
 
 func main() {
-	dir, prog := getArgs()
+	dir, prog := readArgs()
 
-	vars, err := getEnv(dir)
+	vars, err := readVars(dir)
 
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalln(err)
 	}
 
+	start(prog, vars)
+}
+
+func start(prog string, vars []string)  {
 	cmd := exec.Cmd{Path: prog, Env: vars}
 
 	out, err := cmd.Output()
@@ -28,7 +32,7 @@ func main() {
 	fmt.Println(string(out))
 }
 
-func getArgs() (envDir, prog string) {
+func readArgs() (envDir, prog string) {
 	for i, arg := range os.Args {
 		switch {
 		case i == 1:
@@ -40,25 +44,26 @@ func getArgs() (envDir, prog string) {
 	return
 }
 
-func getEnv(envDir string) ([]string, error) {
+func readVars(envDir string) ([]string, error) {
 	dir, err := ioutil.ReadDir(envDir)
-	env := make([]string, 0)
-	pathSeparator := string(os.PathSeparator)
 
 	if err != nil {
 		return nil, err
 	}
 
+	vars := make([]string, 0)
+
 	for _, info := range dir {
 		name := info.Name()
-		bytes, err := ioutil.ReadFile(envDir + string(pathSeparator) + name)
 
-		if err != nil {
-			return env, err
+		bytes, err := ioutil.ReadFile(fmt.Sprintf("%s%c%s", envDir, os.PathSeparator, name))
+
+		if err == nil {
+			vars = append(vars, fmt.Sprintf("%s=%s", name, string(bytes)))
+		} else {
+			log.Println(err)
 		}
-
-		env = append(env, fmt.Sprintf("%s=%s", name, string(bytes)))
 	}
 
-	return env, nil
+	return vars, nil
 }
