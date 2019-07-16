@@ -10,17 +10,18 @@ import (
 
 func main() {
 	dir, prog := readArgs()
-
 	vars, err := readVars(dir)
 
 	if err != nil {
 		log.Fatalln(err)
 	}
 
-	start(prog, vars)
+	out := start(prog, vars)
+
+	fmt.Println(string(out))
 }
 
-func start(prog string, vars []string)  {
+func start(prog string, vars []string) []byte {
 	cmd := exec.Cmd{Path: prog, Env: vars}
 
 	out, err := cmd.Output()
@@ -29,7 +30,7 @@ func start(prog string, vars []string)  {
 		log.Fatalln(err)
 	}
 
-	fmt.Println(string(out))
+	return out
 }
 
 func readArgs() (envDir, prog string) {
@@ -39,8 +40,11 @@ func readArgs() (envDir, prog string) {
 			envDir = arg
 		case i == 2:
 			prog = arg
+		case i > 2:
+			break
 		}
 	}
+
 	return
 }
 
